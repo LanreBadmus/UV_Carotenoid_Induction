@@ -1,0 +1,317 @@
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(ggpubr)
+library(ggplot2)
+library(rstatix)
+library(ggbiplot)
+library(ggfortify)
+install.packages("ggfortify")
+
+# drop sample columms (determine sample column)
+parametersCMSdata <- colnames(CMSdata[, -c(1:5)])
+
+#convert to long format
+data_longCMSdata<- gather(CMSdata, parametersCMSdata, Amount, Ant:Y.NO., factor_key=TRUE)
+
+
+
+# Decide the order of groups in the argument levels
+data_longCMSdata$Treatment <- factor(data_longCMSdata$Treatment, levels = c("-UV-B", "+UV-B"))
+data_longCMSdata$Genotype <- factor(data_longCMSdata$Genotype, levels = c("WT", "aba1-6", "lut1", "lut2", "npq1-2", "npq4-1", "szl1-1", "szl1-1npq1-2"))
+
+#general boxplot for data
+ggboxplot(data_longCMSdata, x = "Genotype", y = "Amount", fill = "Treatment", color = "gray30", size = 0.5,  scales = "free_y", facet.by = c("parametersCMSdata"), point.size = 0.75,outlier.size = 0.25,line.color = "#4D4D4D66",  ggtheme = theme_light(), xlab = "", ylab = "")
+ggbarplot(data_longCMSdata, x = "Genotype", y = "Amount",  fill = "Treatment", position = position_dodge(0.8), add = "mean_se", palette = "#TREATMENT", facet.by = c("parametersCMSdata"), xlab = "Genotype", ylab = "",  scales = "free_y", point.size = 0.75,outlier.size = 0.25)
+
+
+#gather Chl and make boxplot
+data_longCMSdata.Chl<- filter(data_longCMSdata, parametersCMSdata %in% c("Chl.B", "Chl.A", "Total.Chlorophyll", "Chla.b"))
+ggboxplot(data_longCMSdata.Chl, x = "Genotype", y = "Amount", fill = "Treatment", size = 0.5,  scales = "free_y", facet.by = c("parametersCMSdata"), point.size = 0.75,outlier.size = 0.25,line.color = "#4D4D4D66",  ggtheme = theme_light(), xlab = "Genotype", ylab = "µg/g(FW)")
+
+bpchl <- ggbarplot(data_longCMSdata.Chl, x = "Genotype", y = "Amount", fill = "Treatment",
+                   palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)",
+                   position = position_dodge(0.8),
+                   facet.by = "parametersCMSdata", scales = "free_y")
+bpchl
+stat.testchl <- data_longCMSdata.Chl %>%
+  group_by(Genotype, parametersCMSdata) %>%
+  t_test(Amount ~ Treatment, paired = TRUE, 
+              p.adjust.method = "bonferroni") %>%
+  
+  add_significance()
+stat.testchl
+
+stat.testchl <- stat.testchl %>%
+  add_xy_position(x = "Genotype", fun = "mean_se", dodge = 0.8)
+bpchl + 
+  stat_pvalue_manual(
+    stat.testchl, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+
+#gather Car and make Boxplot
+data_longCMSdata.Car2<- filter(data_longCMSdata, parametersCMSdata %in% c("Vio", "Neo", "Zea", "Lut", "B.Car", "Ant"))
+ggboxplot(data_longCMSdata.Car2, x = "Genotype", y = "Amount", fill = "Treatment", size = 0.5,  scales = "free_y", facet.by = c("parametersCMSdata"), point.size = 0.75,outlier.size = 0.25,line.color = "#4D4D4D66",  ggtheme = theme_light(), xlab = "Genotype", ylab = "µg/g(FW)")
+
+bpcar2 <- ggbarplot(data_longCMSdata.Car2, x = "Genotype", y = "Amount", fill = "Treatment",
+                    palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)",
+                    position = position_dodge(0.8),
+                    facet.by = "parametersCMSdata", scales = "free_y")
+bpcar2
+stat.testcar2 <- data_longCMSdata.Car2 %>%
+  group_by(Genotype, parametersCMSdata) %>%
+  t_test(Amount ~ Treatment, paired = TRUE, 
+         p.adjust.method = "bonferroni") %>%
+  
+  add_significance()
+stat.testcar2
+
+stat.testcar2 <- stat.testcar2 %>%
+  add_xy_position(x = "Genotype", fun = "mean_se", dodge = 0.8)
+bpcar2 + 
+  stat_pvalue_manual(
+    stat.testcar2, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+
+#gather Car and make Boxplot
+data_longCMSdata.Car<- filter(data_longCMSdata, parametersCMSdata %in% c("VAZ" , "Total.Carotenoid", "DEPS"))
+ggboxplot(data_longCMSdata.Car, x = "Genotype", y = "Amount", fill = "Treatment", size = 0.5,  scales = "free_y", facet.by = c("parametersCMSdata"), point.size = 0.75,outlier.size = 0.25,line.color = "#4D4D4D66",  ggtheme = theme_light(), xlab = "Genotype", ylab = "µg/g(FW)")
+bpcar <- ggbarplot(data_longCMSdata.Car, x = "Genotype", y = "Amount", fill = "Treatment",
+                   palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)",
+                   position = position_dodge(0.8),
+                   facet.by = "parametersCMSdata", scales = "free_y")
+bpcar
+stat.testcar <- data_longCMSdata.Car %>%
+  group_by(Genotype, parametersCMSdata) %>%
+  t_test(Amount ~ Treatment, paired = TRUE, 
+         p.adjust.method = "bonferroni") %>%
+  
+  add_significance()
+stat.testcar
+
+stat.testcar <- stat.testcar %>%
+  add_xy_position(x = "Genotype", fun = "mean_se", dodge = 0.8)
+bpcar + 
+  stat_pvalue_manual(
+    stat.testcar, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.001, 0.01)))
+
+#gather Chlflu and make Boxplot
+data_longCMSdata.Chlflu<- filter(data_longCMSdata, parametersCMSdata %in% c("Fv.Fm", "Y.II.", "Y.NPQ.", "Y.NO."))
+ggboxplot(data_longCMSdata.Chlflu, x = "Genotype", y = "Amount", fill = "Treatment", size = 0.5,  scales = "free_y", facet.by = c("parametersCMSdata"), point.size = 0.75,outlier.size = 0.25,line.color = "#4D4D4D66",  ggtheme = theme_light(), xlab = "Genotype", ylab = "µg/g(FW)")
+
+bpChlflu<- ggbarplot(data_longCMSdata.Chlflu, x = "Genotype", y = "Amount", fill = "Treatment",
+                  palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)",
+                  position = position_dodge(0.8),
+                  facet.by = "parametersCMSdata", scales = "free_y")
+bpChlflu
+stat.testChlflu <- data_longCMSdata.Chlflu %>%
+  group_by(Genotype, parametersCMSdata) %>%
+  t_test(Amount ~ Treatment, paired = TRUE, 
+         p.adjust.method = "bonferroni") %>%
+  
+  add_significance()
+stat.testChlflu
+
+stat.testChlflu<- stat.testChlflu %>%
+  add_xy_position(x = "Genotype", fun = "mean_se", dodge = 0.8)
+bpChlflu + 
+  stat_pvalue_manual(
+    stat.testChlflu, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+
+
+
+#two way anova Fv.Fm
+aov_Fv.Fm <- aov(Fv.Fm ~Treatment * Genotype , data = CMSdata)
+summary(aov_Fv.Fm)
+Df  Sum Sq Mean Sq F value   Pr(>F)    
+Treatment           1 0.06579 0.06579  24.698 5.29e-06 ***
+  Genotype            7 0.09438 0.01348   5.061 0.000131 ***
+  Treatment:Genotype  7 0.07574 0.01082   4.061 0.000967 ***
+  Residuals          64 0.17050 0.00266                     
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#two way anova Y.II.
+aov_Y.II. <- aov(Y.II. ~Treatment * Genotype , data = CMSdata)
+summary(aov_Y.II.)
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment           1 0.1504 0.15043  41.216 1.91e-08 ***
+  Genotype            7 0.0330 0.00471   1.292    0.269    
+Treatment:Genotype  7 0.0459 0.00656   1.797    0.103    
+Residuals          64 0.2336 0.00365                     
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#two way anova Y.NPQ
+aov_Y.NPQ. <- aov(Y.NPQ. ~Treatment * Genotype , data = CMSdata)
+summary(aov_Y.NPQ.)
+Df  Sum Sq Mean Sq F value   Pr(>F)    
+Treatment           1 0.00293 0.00293   1.171   0.2832    
+Genotype            7 0.24945 0.03564  14.263 5.23e-11 ***
+  Treatment:Genotype  7 0.03714 0.00531   2.123   0.0535 .  
+Residuals          64 0.15990 0.00250                     
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#two way anova Y.NO.
+aov_Y.NO. <- aov(Y.NO. ~Treatment * Genotype , data = CMSdata)
+summary(aov_Y.NO.)
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment           1 0.0887 0.08872  27.634 1.80e-06 ***
+  Genotype            7 0.4662 0.06660  20.743 2.86e-14 ***
+  Treatment:Genotype  7 0.0365 0.00522   1.626    0.144    
+Residuals          64 0.2055 0.00321                     
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#two way anova VAZ
+aov_pVAZ <- aov(VAZ~Treatment * Genotype , data = CMSdata)
+summary(aov_pVAZ)
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment           1   7089    7089  32.713 3.04e-07 ***
+  Genotype            7  50343    7192  33.186  < 2e-16 ***
+  Treatment:Genotype  7   2359     337   1.555    0.165    
+Residuals          64  13870     217                     
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#two way anova Total Car
+aov_pTotalCar <- aov(Total.Carotenoid ~Treatment * Genotype , data = CMSdata)
+summary(aov_pTotalCar)
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment           1  58384   58384  29.194 1.03e-06 ***
+  Genotype            7 107961   15423   7.712 9.74e-07 ***
+  Treatment:Genotype  7   6112     873   0.437    0.876    
+Residuals          64 127990    2000                     
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#two way anova Zea
+aov_pZea <- aov(Zea~Treatment * Genotype , data = CMSdata)
+summary(aov_pZea)
+Df Sum Sq Mean Sq F value Pr(>F)  
+Treatment           1   89.4   89.40   3.428 0.0687 .
+Genotype            7  528.4   75.49   2.894 0.0108 *
+  Treatment:Genotype  7  169.8   24.25   0.930 0.4898  
+Residuals          64 1669.3   26.08                 
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#two way anova Ant
+aov_pAnt <- aov(Ant~Treatment * Genotype , data = CMSdata)
+summary(aov_pAnt)
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment           1   81.3   81.27  15.683 0.000191 ***
+  Genotype            7  475.3   67.89  13.101 2.46e-10 ***
+  Treatment:Genotype  7    8.4    1.21   0.233 0.975788    
+Residuals          64  331.7    5.18                     
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#two way anova Vio
+aov_pVio <- aov(Vio ~Treatment * Genotype , data = CMSdata)
+summary(aov_pVio)
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment           1   4320    4320  22.692 1.13e-05 ***
+  Genotype            7  40180    5740  30.150  < 2e-16 ***
+  Treatment:Genotype  7   2158     308   1.619    0.146    
+Residuals          64  12184     190                     
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#two way anova Lut
+aov_pLut <- aov(Lut~Treatment * Genotype , data = CMSdata)
+summary(aov_pLut)
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment           1  14271   14271  18.029 7.18e-05 ***
+  Genotype            7 181631   25947  32.780  < 2e-16 ***
+  Treatment:Genotype  7   1729     247   0.312    0.946    
+Residuals          64  50660     792                     
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#two way anova Neo
+aov_pNeo <- aov(Neo~Treatment * Genotype , data = CMSdata)
+summary(aov_pNeo)
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment           1  208.2  208.21  21.720 1.65e-05 ***
+  Genotype            7  438.9   62.70   6.541 7.87e-06 ***
+  Treatment:Genotype  7   46.7    6.67   0.696    0.675    
+Residuals          64  613.5    9.59                     
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#two way anova Bcar
+aov_pB.Car <- aov(B.Car~Treatment * Genotype , data = CMSdata)
+summary(aov_pB.Car)
+Df Sum Sq Mean Sq F value  Pr(>F)   
+Treatment           1    554   554.0   7.652 0.00741 **
+  Genotype            7   1646   235.1   3.248 0.00518 **
+  Treatment:Genotype  7    373    53.3   0.736 0.64252   
+Residuals          64   4634    72.4                   
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#two way anova DEPS
+aov_pDEPS <- aov(DEPS~Treatment * Genotype , data = CMSdata)
+summary(aov_pDEPS)
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment           1 0.0036 0.00364   0.342    0.561    
+Genotype            7 0.5053 0.07218   6.792 4.98e-06 ***
+  Treatment:Genotype  7 0.0645 0.00921   0.866    0.538    
+Residuals          64 0.6802 0.01063                     
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> 
+
+
+#two way anova TotalChl
+aov_pTotalChl <- aov(Total.Chlorophyll ~Treatment * Genotype , data = CMSdata)
+summary(aov_pTotalChl)
+Df  Sum Sq Mean Sq F value   Pr(>F)    
+Treatment           1 1212531 1212531  22.844 1.07e-05 ***
+  Genotype            7 1619425  231346   4.359 0.000529 ***
+  Treatment:Genotype  7  140472   20067   0.378 0.911874    
+Residuals          64 3397048   53079                     
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#two way anova Chl.A
+aov_pChla <- aov(Chl.A ~Treatment * Genotype , data = CMSdata)
+summary(aov_pChla)
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment           1 343470  343470  24.129 6.55e-06 ***
+  Genotype            7 356623   50946   3.579  0.00261 ** 
+  Treatment:Genotype  7  45668    6524   0.458  0.86088    
+Residuals          64 911037   14235                     
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#two way anova Chl.B
+aov_pChlb <- aov(Chl.B ~Treatment * Genotype , data = CMSdata)
+summary(aov_pChlb)
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment           1 265314  265314  20.258 2.93e-05 ***
+  Genotype            7 467739   66820   5.102 0.000121 ***
+  Treatment:Genotype  7  26861    3837   0.293 0.954305    
+Residuals          64 838211   13097                     
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+>
+  
+#two way anova Chla.b
+aov_pChlab <- aov(Chla.b ~Treatment * Genotype , data = CMSdata)
+summary(aov_pChlab)
+Df Sum Sq  Mean Sq F value Pr(>F)  
+Treatment           1 0.0214 0.021443   2.366 0.1290  
+Genotype            7 0.1477 0.021094   2.327 0.0352 *
+  Treatment:Genotype  7 0.0241 0.003443   0.380 0.9108  
+Residuals          64 0.5801 0.009064                 
+---
+  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
