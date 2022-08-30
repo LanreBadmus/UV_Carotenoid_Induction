@@ -1,0 +1,260 @@
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(ggpubr)
+library(ggplot2)
+library(rstatix)
+library(ggbiplot)
+library(ggfortify)
+install.packages("ggfortify")
+
+#load data
+PMSCarChlflu <- read.csv("C:/Users/ubadmus/OneDrive - University College Cork/Posdoc related/UVSintec Data/potential MS/TocopherolMS/data/Tocdata/PMSCarChlflu.csv", stringsAsFactors=TRUE)
+View(PMSCarChlflu)
+
+# drop sample columms (determine sample column)
+parametersPMSCarChlflu <- colnames(PMSCarChlflu[, -c(1:6)])
+
+#convert to long format
+data_longPMSCarChlflu<- gather(PMSCarChlflu, parametersPMSCarChlflu, Amount, Fv.Fm: Y.NO., factor_key=TRUE)
+
+# Decide the order of groups in the argument levels
+data_longPMSCarChlflu$Treatment <- factor(data_longPMSCarChlflu$Treatment, levels = c("-UV-B", "+UV-B"))
+data_longPMSCarChlflu$Mutant..Type <- factor(data_longPMSCarChlflu$Mutant..Type, levels = c("WT", "cry1cry2", "phot1phot2", "uvr8"))
+
+
+
+#gather Chl and make boxplot
+data_longPMSCarChlflu.Chl<- filter(data_longPMSCarChlflu, parametersPMSCarChlflu %in% c("Fv.Fm", "Y.II.", "Y.NPQ.", "Y.NO."))
+
+#chl barplot with stat
+bpChlpms <- ggbarplot(data_longPMSCarChlflu.Chl, x = "Mutant..Type", y = "Amount", fill = "Treatment",
+                   palette = "Treatment", add = "mean_se", ylab = "", xlab = "Genotype",
+                   position = position_dodge(0.8),
+                   facet.by = "parametersPMSCarChlflu", scales = "free_y")
+bpChlpms
+stat.testchlpms <- data_longPMSCarChlflu.Chl %>%
+  group_by(Mutant..Type, parametersPMSCarChlflu) %>%
+  wilcox_test(Amount ~ Treatment,
+              p.adjust.method = "bonferroni") %>%
+  add_significance()
+stat.testchlpms
+
+stat.testchlpms <- stat.testchlpms %>%
+  add_xy_position(x = "Mutant..Type", fun = "mean_se", dodge = 0.8)
+bpChlpms +
+  stat_pvalue_manual(
+    stat.testchlpms, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+
+
+
+
+#two way anova 
+
+aov_pFv.Fm <- aov(Fv.Fm~Treatment *  Mutant..Type , data = PMSCarChlflu)
+summary(aov_pFv.Fm)
+
+Df  Sum Sq Mean Sq F value   Pr(>F)    
+Treatment               1 0.08533 0.08533  29.326 5.93e-06 ***
+  Mutant..Type            3 0.02913 0.00971   3.337   0.0315 *  
+  Treatment:Mutant..Type  3 0.02437 0.00812   2.792   0.0562 .  
+Residuals              32 0.09311 0.00291    
+
+aov_pY.II. <- aov(Y.II. ~Treatment *  Mutant..Type , data = PMSCarChlflu)
+summary(aov_pY.II. )
+
+Df  Sum Sq Mean Sq F value   Pr(>F)    
+Treatment               1 0.17706 0.17706  59.454 8.63e-09 ***
+  Mutant..Type            3 0.05653 0.01884   6.327  0.00171 ** 
+  Treatment:Mutant..Type  3 0.02717 0.00906   3.042  0.04303 *  
+  Residuals              32 0.09530 0.00298                   
+
+aov_pY.NPQ. <- aov(Y.NPQ. ~Treatment *  Mutant..Type , data = PMSCarChlflu)
+summary(aov_pY.NPQ.)
+
+Df  Sum Sq  Mean Sq F value  Pr(>F)   
+Treatment               1 0.00227 0.002269   1.830 0.18565   
+Mutant..Type            3 0.02238 0.007459   6.015 0.00227 **
+  Treatment:Mutant..Type  3 0.00417 0.001389   1.120 0.35536   
+Residuals              32 0.03968 0.001240                
+
+aov_pY.NO. <- aov(Y.NO. ~Treatment *  Mutant..Type , data = PMSCarChlflu)
+summary(aov_pY.NO.)
+
+Df  Sum Sq Mean Sq F value   Pr(>F)    
+Treatment               1 0.14244 0.14244 106.301 1.07e-11 ***
+  Mutant..Type            3 0.01262 0.00421   3.139   0.0388 *  
+  Treatment:Mutant..Type  3 0.01561 0.00520   3.884   0.0178 *  
+  Residuals              32 0.04288 0.00134                     
+
+
+#load data
+PMSCarCar <- read.csv("C:/Users/ubadmus/OneDrive - University College Cork/Posdoc related/UVSintec Data/potential MS/TocopherolMS/data/Tocdata/PMSCarCar.csv", stringsAsFactors=TRUE)
+View(PMSCarCar)
+
+# drop sample columms (determine sample column)
+parametersPMSCarCar <- colnames(PMSCarCar[, -c(1:3)])
+
+#convert to long format
+data_longPMSCarCar<- gather(PMSCarCar, parametersPMSCarCar, Amount, Ant:Chla.b, factor_key=TRUE)
+
+# Decide the order of groups in the argument levels
+data_longPMSCarCar$Treatment <- factor(data_longPMSCarCar$Treatment, levels = c("-UV-B", "+UV-B"))
+data_longPMSCarCar$Plant_type <- factor(data_longPMSCarCar$Plant_type, levels = c("WT", "cry1cry2", "phot1phot2", "uvr8"))
+
+
+
+#gather Chl and make boxplot
+data_longPMSCarCar.Chl<- filter(data_longPMSCarCar, parametersPMSCarCar %in% c("Chl.B", "Chl.A", "Total.Chlorophyll", "Chla.b"))
+
+#chl barplot with stat
+bpChl <- ggbarplot(data_longPMSCarCar.Chl, x = "Plant_type", y = "Amount", fill = "Treatment",
+                   palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)", xlab = "Genotype",
+                   position = position_dodge(0.8),
+                   facet.by = "parametersPMSCarCar", scales = "free_y")
+bpChl
+stat.testchl <- data_longPMSCarCar.Chl %>%
+  group_by(Plant_type, parametersPMSCarCar) %>%
+  wilcox_test(Amount ~ Treatment,
+         p.adjust.method = "bonferroni") %>%
+  add_significance()
+stat.testchl
+
+stat.testchl <- stat.testchl %>%
+  add_xy_position(x = "Plant_type", fun = "mean_se", dodge = 0.8)
+bpChl +
+  stat_pvalue_manual(
+    stat.testchl, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+
+
+
+#gather Car and make Boxplot
+data_longPMSCarCar.Car2<- filter(data_longPMSCarCar, parametersPMSCarCar %in% c("Vio", "Neo", "Zea", "Lut", "B.Car", "Ant", "VAZ","Total.Carotenoid", "DEPS"))
+
+#Car2 barplot with stat
+bpCar2 <- ggbarplot(data_longPMSCarCar.Car2, x = "Plant_type", y = "Amount", fill = "Treatment",
+                    palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)", xlab = "Genotype",
+                    position = position_dodge(0.8),
+                    facet.by = "parametersPMSCarCar", scales = "free_y")
+bpCar2
+stat.testcar2 <- data_longPMSCarCar.Car2 %>%
+  group_by(Plant_type, parametersPMSCarCar) %>%
+  wilcox_test(Amount ~ Treatment, paired = TRUE,
+         p.adjust.method = "bonferroni") %>%
+  add_significance()
+stat.testcar2
+
+stat.testcar2 <- stat.testcar2 %>%
+  add_xy_position(x = "Plant_type", fun = "mean_se", dodge = 0.8)
+bpCar2 +
+  stat_pvalue_manual(stat.testcar2, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+
+
+#gather Car and make Boxplot
+data_longPMSCarCar.Car<- filter(data_longPMSCarCar, parametersPMSCarCar %in% c("VAZ", "DEPS", "Total.Carotenoid"))
+
+#Car barplot with stat
+bpCar <- ggbarplot(data_longPMSCarCar.Car, x = "Plant_type", y = "Amount", fill = "Treatment",
+                   palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)", xlab = "Genotype",
+                   position = position_dodge(0.8),
+                   facet.by = "parametersPMSCarCar", scales = "free_y")
+bpCar
+stat.testcar <- data_longPMSCarCar.Car %>%
+  group_by(Plant_type, parametersPMSCarCar) %>%
+  t_test(Amount ~ Treatment,
+         p.adjust.method = "bonferroni") %>%
+  add_significance()
+stat.testcar
+
+stat.testcar <- stat.testcar %>%
+  add_xy_position(x = "Plant_type", fun = "mean_se", dodge = 0.8)
+bpCar +
+  stat_pvalue_manual(
+    stat.testcar, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+#gather Car and make Boxplot
+data_longPMSCarCar.Car3<- filter(data_longPMSCarCar, parametersPMSCarCar %in% c("Total.Carotenoid"))
+
+#Car3 barplot with stat
+bpCar3 <- ggbarplot(data_longPMSCarCar.Car3, x = "Plant_type", y = "Amount", fill = "Treatment",
+                    palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)", xlab = "Genotype",
+                    position = position_dodge(0.8),
+                    facet.by = "parametersPMSCarCar", scales = "free_y")
+bpCar3
+stat.testcar3 <- data_longPMSCarCar.Car3 %>%
+  group_by(Plant_type, parametersPMSCarCar) %>%
+  wilcox_test(Amount ~ Treatment,
+         p.adjust.method = "bonferroni") %>%
+  add_significance()
+stat.testcar3
+
+stat.testcar3 <- stat.testcar3 %>%
+  add_xy_position(x = "Plant_type", fun = "mean_se", dodge = 0.8)
+bpCar3 +
+  stat_pvalue_manual(stat.testcar3, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+
+
+
+
+#two way anova 
+aov_pVAZ  <- aov(VAZ  ~Treatment * Plant_type , data = PMSCarCar)
+summary(aov_pVAZ)
+
+aov_pTotal.carotenoid <- aov(Total.Carotenoid ~Treatment *  Plant_type , data = PMSCarCar)
+summary(aov_pTotal.carotenoid)
+
+aov_pDEPS <- aov(DEPS ~Treatment *  Plant_type , data = PMSCarCar)
+summary(aov_pDEPS)
+
+aov_pAnt<- aov(Ant ~Treatment *  Plant_type , data = PMSCarCar)
+summary(aov_pAnt)
+
+aov_pNeo  <- aov(Neo  ~Treatment * Plant_type , data = PMSCarCar)
+summary(aov_pNeo)
+
+Df Sum Sq Mean Sq F value Pr(>F)  
+Treatment             1  205.8  205.78   5.315 0.0301 *
+  Plant_type            3  207.2   69.08   1.784 0.1771  
+Treatment:Plant_type  3   34.9   11.64   0.301 0.8245  
+Residuals            24  929.2   38.71          
+
+  
+aov_pVio<- aov(Vio ~Treatment *  Plant_type , data = PMSCarCar)
+summary(aov_pVio)
+
+aov_pLut <- aov(Lut ~Treatment *  Plant_type , data = PMSCarCar)
+summary(aov_pLut)
+
+
+aov_pZea <- aov(Zea ~Treatment *  Plant_type , data = PMSCarCar)
+summary(aov_pZea)
+
+
+aov_pB.Car <- aov(B.Car ~Treatment *  Plant_type , data = PMSCarCar)
+summary(aov_pB.Car)
+
+aov_pChl.A <- aov(Chl.A ~Treatment *  Plant_type , data = PMSCarCar)
+summary(aov_pChl.A)
+
+
+aov_pChl.B <- aov(Chl.B ~Treatment *  Plant_type , data = PMSCarCar)
+summary(aov_pChl.B)
+
+
+aov_pChla.b <- aov(Chla.b ~Treatment *  Plant_type , data = PMSCarCar)
+summary(aov_pChla.b)
+
+aov_pTotal.chlorophyll <- aov(Total.Chlorophyll ~Treatment *  Plant_type , data = PMSCarCar)
+summary(aov_pTotal.chlorophyll)
+
+
+  
