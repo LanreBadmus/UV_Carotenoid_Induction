@@ -1,0 +1,332 @@
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(ggpubr)
+library(ggplot2)
+library(rstatix)
+library(ggbiplot)
+library(ggfortify)
+install.packages("ggfortify")
+
+
+#load data
+KSCarChlflu <- read.csv("C:/Users/ubadmus/OneDrive - University College Cork/Posdoc related/UVSintec Data/potential MS/TocopherolMS/data/Tocdata/KSCarChlflu.csv", stringsAsFactors=TRUE)
+View(KSCarChlflu)
+
+# drop sample columms (determine sample column)
+parametersKSCarChlflu <- colnames(KSCarChlflu[, -c(1:3)])
+
+#convert to long format
+data_longKSCarChlflu<- gather(KSCarChlflu, parametersKSCarChlflu, Amount, Fv.Fm: Y.NO., factor_key=TRUE)
+
+# Decide the order of groups in the argument levels
+data_longKSCarChlflu$Treatment <- factor(data_longKSCarChlflu$Treatment, levels = c("-UV-B", "+UV-B"))
+data_longKSCarChlflu$Trt_day <- factor(data_longKSCarChlflu$Trt_day, levels = c("2", "4", "6", "8", "10"))
+
+
+
+#gather Chl and make boxplot
+data_longKSCarChlflu.Chl<- filter(data_longKSCarChlflu, parametersKSCarChlflu %in% c("Fv.Fm", "Y.II.", "Y.NPQ.", "Y.NO."))
+
+#chl barplot with stat
+bpKSChlflu <- ggbarplot(data_longKSCarChlflu.Chl, x = "Trt_day", y = "Amount", fill = "Treatment",
+                   palette = "Treatment", add = "mean_se", ylab = "", xlab = "no of days of UV treatment",
+                   position = position_dodge(0.8),
+                   facet.by = "parametersKSCarChlflu", scales = "free_y")
+bpKSChlflu
+stat.testchlflu <- data_longKSCarChlflu.Chl %>%
+  group_by(Trt_day, parametersKSCarChlflu) %>%
+  t_test(Amount ~ Treatment, paired = TRUE,
+         p.adjust.method = "bonferroni") %>%
+  add_significance()
+stat.testchlflu
+
+stat.testchlflu<- stat.testchlflu %>%
+  add_xy_position(x = "Trt_day", fun = "mean_se", dodge = 0.8)
+bpKSChlflu +
+  stat_pvalue_manual(
+    stat.testchlflu, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+
+
+
+
+
+#two way anova 
+aov_pFv.Fm  <- aov(Fv.Fm  ~Treatment * Trt_day , data = KSCarChlflu)
+summary(aov_pFv.Fm)
+
+Df Sum Sq  Mean Sq F value Pr(>F)  
+Treatment          1 0.0162 0.016200   3.881 0.0549 .
+Trt_day            1 0.0064 0.006400   1.533 0.2219  
+Treatment:Trt_day  1 0.0016 0.001600   0.383 0.5389  
+Residuals         46 0.1920 0.004174               
+
+aov_pY.II.<- aov(Y.II. ~Treatment *  Trt_day , data = KSCarChlflu)
+summary(aov_pY.II.)
+
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment          1 0.1458 0.14580  38.456 1.44e-07 ***
+  Trt_day            1 0.0324 0.03240   8.546  0.00536 ** 
+  Treatment:Trt_day  1 0.0036 0.00360   0.950  0.33493    
+Residuals         46 0.1744 0.00379                     
+
+aov_pY.NPQ. <- aov(Y.NPQ.~Treatment * Trt_day , data = KSCarChlflu)
+summary(aov_pY.NPQ.)
+
+Df Sum Sq  Mean Sq F value Pr(>F)
+Treatment          1 0.0018 0.001800   0.520  0.474
+Trt_day            1 0.0016 0.001600   0.462  0.500
+Treatment:Trt_day  1 0.0016 0.001600   0.462  0.500
+Residuals         46 0.1592 0.003461 
+
+aov_pY.NO.<- aov(Y.NO. ~Treatment *  Trt_day , data = KSCarChlflu)
+summary(aov_pY.NO.)
+
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment          1 0.0450 0.04500  13.303 0.000673 ***
+  Trt_day            1 0.0100 0.01000   2.956 0.092267 .  
+Treatment:Trt_day  1 0.0016 0.00160   0.473 0.495060    
+Residuals         46 0.1556 0.00338                     
+---
+
+load data
+KSCarCar <- read.csv("C:/Users/ubadmus/OneDrive - University College Cork/Posdoc related/UVSintec Data/potential MS/TocopherolMS/data/Tocdata/KSCarCar.csv", stringsAsFactors=TRUE)
+View(KSCarCar)
+
+# drop sample columms (determine sample column)
+parametersKSCarCar <- colnames(KSCarCar[, -c(1:4)])
+
+#convert to long format
+data_longKSCarCar<- gather(KSCarCar, parametersKSCarCar, Amount, Ant:Chla.b, factor_key=TRUE)
+
+# Decide the order of groups in the argument levels
+data_longKSCarCar$Treatment <- factor(data_longKSCarCar$Treatment, levels = c("-UV-B", "+UV-B"))
+data_longKSCarCar$Trt_day <- factor(data_longKSCarCar$Trt_day, levels = c("2", "4", "6", "8", "10"))
+
+
+
+#gather Chl and make boxplot
+data_longKSCarCar.Chl<- filter(data_longKSCarCar, parametersKSCarCar %in% c("Chl.B", "Chl.A", "Total.chlorophyll", "Chla.b"))
+
+#chl barplot with stat
+bpKSChl <- ggbarplot(data_longKSCarCar.Chl, x = "Trt_day", y = "Amount", fill = "Treatment",
+                   palette = "Treatment", add = "mean_se", xlab = "no of days of UV treatment", ylab = "µg.g-1(FW)",
+                   position = position_dodge(0.8),
+                   facet.by = "parametersKSCarCar", scales = "free_y")
+bpKSChl
+stat.testchl <- data_longKSCarCar.Chl %>%
+  group_by(Trt_day, parametersKSCarCar) %>%
+  t_test(Amount ~ Treatment, paired = TRUE,
+         p.adjust.method = "bonferroni") %>%
+  add_significance()
+stat.testchl
+
+stat.testchl <- stat.testchl %>%
+  add_xy_position(x = "Trt_day", fun = "mean_se", dodge = 0.8)
+bpKSChl +
+  stat_pvalue_manual(
+    stat.testchl, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+
+
+
+#gather Car and make Boxplot
+data_longKSCarCar.Car2<- filter(data_longKSCarCar, parametersKSCarCar %in% c("Vio", "Neo", "Zea", "Lut", "B.Car", "Ant","VAZ", "DEPS", "Total.carotenoid"))
+
+#Car2 barplot with stat
+bpKSCar2 <- ggbarplot(data_longKSCarCar.Car2, x = "Trt_day", y = "Amount", fill = "Treatment",
+                    palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)",xlab = "no of days of UV treatment",
+                    position = position_dodge(0.8),
+                    facet.by = "parametersKSCarCar", scales = "free_y")
+bpKSCar2
+stat.testcar2 <- data_longKSCarCar.Car2 %>%
+  group_by(Trt_day, parametersKSCarCar) %>%
+  t_test(Amount ~ Treatment, paired = TRUE,
+         p.adjust.method = "bonferroni") %>%
+  add_significance()
+stat.testcar2
+
+stat.testcar2 <- stat.testcar2 %>%
+  add_xy_position(x = "Trt_day", fun = "mean_se", dodge = 0.8)
+bpKSCar2 +
+  stat_pvalue_manual(stat.testcar2, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+
+
+#gather Car and make Boxplot
+data_longKSCarCar.Car<- filter(data_longKSCarCar, parametersKSCarCar %in% c("VAZ", "DEPS", "Total.carotenoid"))
+
+#Car barplot with stat
+bpCar <- ggbarplot(data_longKSCarCar.Car, x = "Trt_day", y = "Amount", fill = "Treatment",
+                   palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)",xlab = "no of days of UV treatment",
+                   position = position_dodge(0.8),
+                   facet.by = "parametersKSCarCar", scales = "free_y")
+bpCar
+stat.testcar <- data_longKSCarCar.Car %>%
+  group_by(Trt_day, parametersKSCarCar) %>%
+  t_test(Amount ~ Treatment,
+         p.adjust.method = "bonferroni") %>%
+  add_significance()
+stat.testcar
+
+stat.testcar <- stat.testcar %>%
+  add_xy_position(x = "Trt_day", fun = "mean_se", dodge = 0.8)
+bpCar +
+  stat_pvalue_manual(
+    stat.testcar, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+#gather Car and make Boxplot
+data_longKSCarCar.Car3<- filter(data_longKSCarCar, parametersKSCarCar %in% c("Total.carotenoid"))
+
+#Car3 barplot with stat
+bpCar3 <- ggbarplot(data_longKSCarCar.Car3, x = "Trt_day", y = "Amount", fill = "Treatment",
+                    palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)",xlab = "no of days of UV treatment",
+                    position = position_dodge(0.8),
+                    facet.by = "parametersKSCarCar", scales = "free_y")
+bpCar3
+stat.testcar3 <- data_longKSCarCar.Car3 %>%
+  group_by(Trt_day, parametersKSCarCar) %>%
+  t_test(Amount ~ Treatment,
+         p.adjust.method = "bonferroni") %>%
+  add_significance()
+stat.testcar3
+
+stat.testcar3 <- stat.testcar3 %>%
+  add_xy_position(x = "Trt_day", fun = "mean_se", dodge = 0.8)
+bpCar3 +
+  stat_pvalue_manual(stat.testcar3, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+
+
+
+
+#two way anova 
+aov_pVAZ  <- aov(VAZ  ~Treatment * Trt_day , data = KSCarCar)
+summary(aov_pVAZ)
+
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment          1   4513    4513  14.997 0.000651 ***
+  Trt_day            1     33      33   0.110 0.743102    
+Treatment:Trt_day  1     31      31   0.104 0.749538    
+Residuals         26   7824     301                     
+
+aov_pTotal.carotenoid <- aov(Total.carotenoid ~Treatment *  Trt_day , data = KSCarCar)
+summary(aov_pTotal.carotenoid)
+
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment          1  32777   32777  17.201 0.000318 ***
+  Trt_day            1    604     604   0.317 0.578201    
+Treatment:Trt_day  1   1933    1933   1.015 0.323101    
+Residuals         26  49545    1906                     
+---
+  
+aov_pDEPS <- aov(DEPS ~Treatment *  Trt_day , data = KSCarCar)
+summary(aov_pDEPS)
+
+Df  Sum Sq  Mean Sq F value Pr(>F)  
+Treatment          1 0.00017 0.000172   0.125 0.7264  
+Trt_day            1 0.00520 0.005199   3.789 0.0625 .
+Treatment:Trt_day  1 0.00406 0.004060   2.959 0.0973 .
+Residuals         26 0.03567 0.001372                 
+---
+
+aov_pAnt<- aov(Ant ~Treatment *  Trt_day , data = KSCarCar)
+summary(aov_pAnt)
+
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment          1 155.65  155.65  19.398 0.000162 ***
+  Trt_day            1  17.82   17.82   2.220 0.148225    
+Treatment:Trt_day  1  30.25   30.25   3.769 0.063111 .  
+Residuals         26 208.63    8.02                     
+---
+  
+aov_pNeo  <- aov(Neo  ~Treatment * Trt_day , data = KSCarCar)
+summary(aov_pNeo)
+
+Df Sum Sq Mean Sq F value  Pr(>F)    
+Treatment          1  588.3   588.3  25.702 2.8e-05 ***
+  Trt_day            1  261.3   261.3  11.418  0.0023 ** 
+  Treatment:Trt_day  1   67.6    67.6   2.952  0.0977 .  
+Residuals         26  595.1    22.9                    
+---
+  
+aov_pVio<- aov(Vio ~Treatment *  Trt_day , data = KSCarCar)
+summary(aov_pVio)
+
+Df Sum Sq Mean Sq F value Pr(>F)   
+Treatment          1   2945  2945.1  12.994 0.0013 **
+  Trt_day            1      1     0.6   0.003 0.9584   
+Treatment:Trt_day  1     78    77.7   0.343 0.5633   
+Residuals         26   5893   226.7    
+
+aov_pLut <- aov(Lut ~Treatment *  Trt_day , data = KSCarCar)
+summary(aov_pLut)
+
+Df Sum Sq Mean Sq F value   Pr(>F)    
+Treatment          1   8601    8601  14.950 0.000661 ***
+  Trt_day            1      4       4   0.007 0.933576    
+Treatment:Trt_day  1    397     397   0.691 0.413496    
+Residuals         26  14958     575          
+
+aov_pZea <- aov(Zea ~Treatment *  Trt_day , data = KSCarCar)
+summary(aov_pZea)
+
+Df Sum Sq Mean Sq F value Pr(>F)
+Treatment          1   0.19   0.187   0.060  0.808
+Trt_day            1   5.37   5.374   1.740  0.199
+Treatment:Trt_day  1   5.21   5.211   1.687  0.205
+Residuals         26  80.32   3.089  
+
+aov_pB.Car <- aov(B.Car ~Treatment *  Trt_day , data = KSCarCar)
+summary(aov_pB.Car)
+
+Df Sum Sq Mean Sq F value Pr(>F)
+Treatment          1    2.3    2.33   0.033  0.857
+Trt_day            1   70.9   70.87   1.007  0.325
+Treatment:Trt_day  1   37.7   37.71   0.536  0.471
+Residuals         26 1829.1   70.35 
+
+aov_pChl.A <- aov(Chl.A ~Treatment *  Trt_day , data = KSCarCar)
+summary(aov_pChl.A)
+
+Df Sum Sq Mean Sq F value  Pr(>F)   
+Treatment          1 126226  126226  12.396 0.00161 **
+  Trt_day            1     46      46   0.005 0.94701   
+Treatment:Trt_day  1   3308    3308   0.325 0.57357   
+Residuals         26 264746   10183   
+
+aov_pChl.B <- aov(Chl.B ~Treatment *  Trt_day , data = KSCarCar)
+summary(aov_pChl.B)
+
+Df Sum Sq Mean Sq F value  Pr(>F)   
+Treatment          1 100836  100836   8.245 0.00802 **
+  Trt_day            1    478     478   0.039 0.84482   
+Treatment:Trt_day  1  11849   11849   0.969 0.33405   
+Residuals         26 317991   12230
+
+aov_pChla.b <- aov(Chla.b ~Treatment *  Trt_day , data = KSCarCar)
+summary(aov_pChla.b)
+
+Df  Sum Sq  Mean Sq F value Pr(>F)
+Treatment          1 0.01040 0.010401   2.679  0.114
+Trt_day            1 0.00464 0.004644   1.196  0.284
+Treatment:Trt_day  1 0.00645 0.006447   1.661  0.209
+Residuals         26 0.10094 0.003882      
+
+aov_pTotal.chlorophyll <- aov(Total.chlorophyll ~Treatment *  Trt_day , data = KSCarCar)
+summary(aov_pTotal.chlorophyll)
+
+Df  Sum Sq Mean Sq F value Pr(>F)   
+Treatment          1  452698  452698  10.313 0.0035 **
+  Trt_day            1     228     228   0.005 0.9431   
+Treatment:Trt_day  1   27679   27679   0.631 0.4343   
+Residuals         26 1141249   43894                  
+---
+  
+
