@@ -315,3 +315,27 @@ Residuals          64 0.5801 0.009064
 ---
   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
+#pca for general, separate (only +uv-b $ -uv-b) and relative effect (+uv-b/-uv-b)
+df <- CMSdata[6:13]
+dfs <- scale(df)
+autoplot(prcomp(dfs), data = CMSdata, colour = 'Trt_Gen', loadings = TRUE, loadings.label = TRUE, loadings.label.size = 3, label.size = 10)
+
+
+df2 <- CMSdata[6:22]
+df3 <- df2 [-c(9:13)]
+df3s <- scale(df3)
+autoplot(prcomp(df3s), data = CMSdata, colour = 'Trt_Gen', loadings = TRUE, loadings.label = TRUE, loadings.label.size = 3)
+
+
+
+dfMY <- CMSdata_MY[5:16]
+dfMYs <- scale(dfMY)
+autoplot(prcomp(dfMYs), data = CMSdata_MY, colour = 'Genotype', loadings = TRUE, loadings.label = TRUE, loadings.label.size = 3, label.size = 10)
+
+dfRE <- CMSdata_RE[4:14]
+dfREs <- scale(dfRE)
+autoplot(prcomp(dfREs), data = CMSdata_RE, colour = 'Genotype', loadings = TRUE, loadings.label = TRUE, loadings.label.size = 3, label.size = 10)
+
+dfCA <- CMSdata_CA[5:16]
+dfCAs <- scale(dfCA)
+autoplot(prcomp(dfCAs), data = CMSdata_CA, colour = 'Genotype', loadings = TRUE, loadings.label = TRUE, loadings.label.size = 3, label.size = 10)
