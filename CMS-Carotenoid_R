@@ -25,103 +25,74 @@ ggboxplot(data_longCMSdata, x = "Genotype", y = "Amount", fill = "Treatment", co
 ggbarplot(data_longCMSdata, x = "Genotype", y = "Amount",  fill = "Treatment", position = position_dodge(0.8), add = "mean_se", palette = "#TREATMENT", facet.by = c("parametersCMSdata"), xlab = "Genotype", ylab = "",  scales = "free_y", point.size = 0.75,outlier.size = 0.25)
 
 
-#gather Chl and make boxplot
-data_longCMSdata.Chl<- filter(data_longCMSdata, parametersCMSdata %in% c("Chl.B", "Chl.A", "Total.Chlorophyll", "Chla.b"))
-ggboxplot(data_longCMSdata.Chl, x = "Genotype", y = "Amount", fill = "Treatment", size = 0.5,  scales = "free_y", facet.by = c("parametersCMSdata"), point.size = 0.75,outlier.size = 0.25,line.color = "#4D4D4D66",  ggtheme = theme_light(), xlab = "Genotype", ylab = "µg/g(FW)")
-
-bpchl <- ggbarplot(data_longCMSdata.Chl, x = "Genotype", y = "Amount", fill = "Treatment",
-                   palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)",
-                   position = position_dodge(0.8),
-                   facet.by = "parametersCMSdata", scales = "free_y")
-bpchl
-stat.testchl <- data_longCMSdata.Chl %>%
-  group_by(Genotype, parametersCMSdata) %>%
-  t_test(Amount ~ Treatment, paired = TRUE, 
-              p.adjust.method = "bonferroni") %>%
-  
-  add_significance()
-stat.testchl
-
-stat.testchl <- stat.testchl %>%
-  add_xy_position(x = "Genotype", fun = "mean_se", dodge = 0.8)
-bpchl + 
-  stat_pvalue_manual(
-    stat.testchl, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
-  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
-
-
 #gather Car and make Boxplot
-data_longCMSdata.Car2<- filter(data_longCMSdata, parametersCMSdata %in% c("Vio", "Neo", "Zea", "Lut", "B.Car", "Ant"))
-ggboxplot(data_longCMSdata.Car2, x = "Genotype", y = "Amount", fill = "Treatment", size = 0.5,  scales = "free_y", facet.by = c("parametersCMSdata"), point.size = 0.75,outlier.size = 0.25,line.color = "#4D4D4D66",  ggtheme = theme_light(), xlab = "Genotype", ylab = "µg/g(FW)")
+data_longCMSdata.Car2<- filter(data_longCMSdata, parametersCMSdata %in% c("Vio", "Neo", "Zea", "Lut", "B.Car", "Ant", "VAZ", "Total.Carotenoid", "DEPS"))
+ggboxplot(data_longCMSdata.Car2, x = "Treatment", y = "Amount", fill = "Genotype", size = 0.5,  scales = "free_y", facet.by = c("parametersCMSdata"), point.size = 0.75,outlier.size = 0.25,line.color = "#4D4D4D66",  ggtheme = theme_light(), xlab = "Treatment", ylab = "µg/g(FW)")
 
-bpcar2 <- ggbarplot(data_longCMSdata.Car2, x = "Genotype", y = "Amount", fill = "Treatment",
+bpcar2 <- ggbarplot(data_longCMSdata.Car2, x = "Treatment", y = "Amount", fill = "Genotype",
                     palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)",
                     position = position_dodge(0.8),
                     facet.by = "parametersCMSdata", scales = "free_y")
 bpcar2
 stat.testcar2 <- data_longCMSdata.Car2 %>%
-  group_by(Genotype, parametersCMSdata) %>%
-  t_test(Amount ~ Treatment, paired = TRUE, 
-         p.adjust.method = "bonferroni") %>%
+  group_by(Treatment, parametersCMSdata) %>%
+  t_test(Amount ~ Genotype, ref.group = "WT") %>%
   
   add_significance()
 stat.testcar2
 
 stat.testcar2 <- stat.testcar2 %>%
-  add_xy_position(x = "Genotype", fun = "mean_se", dodge = 0.8)
+  add_xy_position(x = "Treatment", fun = "mean_se", dodge = 0.8 )
 bpcar2 + 
   stat_pvalue_manual(
-    stat.testcar2, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
-  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+    stat.testcar2, label = "p.adj.signif", bracket.nudge.y = -2, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.5)))
 
+#gather Chl and make boxplot
+data_longCMSdata.Chl<- filter(data_longCMSdata, parametersCMSdata %in% c("Chl.B", "Chl.A", "Total.Chlorophyll", "Chla.b"))
+ggboxplot(data_longCMSdata.Chl, x = "Genotype", y = "Amount", fill = "Treatment", size = 0.5,  scales = "free_y", facet.by = c("parametersCMSdata"), point.size = 0.75,outlier.size = 0.25,line.color = "#4D4D4D66",  ggtheme = theme_light(), xlab = "Genotype", ylab = "µg/g(FW)")
 
-#gather Car and make Boxplot
-data_longCMSdata.Car<- filter(data_longCMSdata, parametersCMSdata %in% c("VAZ" , "Total.Carotenoid", "DEPS"))
-ggboxplot(data_longCMSdata.Car, x = "Genotype", y = "Amount", fill = "Treatment", size = 0.5,  scales = "free_y", facet.by = c("parametersCMSdata"), point.size = 0.75,outlier.size = 0.25,line.color = "#4D4D4D66",  ggtheme = theme_light(), xlab = "Genotype", ylab = "µg/g(FW)")
-bpcar <- ggbarplot(data_longCMSdata.Car, x = "Genotype", y = "Amount", fill = "Treatment",
-                   palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)",
-                   position = position_dodge(0.8),
-                   facet.by = "parametersCMSdata", scales = "free_y")
-bpcar
-stat.testcar <- data_longCMSdata.Car %>%
-  group_by(Genotype, parametersCMSdata) %>%
-  t_test(Amount ~ Treatment, paired = TRUE, 
-         p.adjust.method = "bonferroni") %>%
+bpchl <- ggbarplot(data_longCMSdata.Chl, x = "Treatment", y = "Amount", fill = "Genotype",
+                          palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)",
+                          position = position_dodge(0.8),
+                          facet.by = "parametersCMSdata", scales = "free_y")
+bpchl
+stat.testchl <- data_longCMSdata.Chl%>%
+  group_by(Treatment, parametersCMSdata) %>%
+  t_test(Amount ~ Genotype, ref.group = "WT") %>%
   
   add_significance()
-stat.testcar
+stat.testchl
 
-stat.testcar <- stat.testcar %>%
-  add_xy_position(x = "Genotype", fun = "mean_se", dodge = 0.8)
-bpcar + 
+stat.testchl <- stat.testchl%>%
+  add_xy_position(x = "Treatment", fun = "mean_se", dodge = 0.8 )
+bpchl + 
   stat_pvalue_manual(
-    stat.testcar, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
-  scale_y_continuous(expand = expansion(mult = c(0.001, 0.01)))
+    stat.testchl, label = "p.adj.signif", bracket.nudge.y = -2, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.5)))
 
 #gather Chlflu and make Boxplot
 data_longCMSdata.Chlflu<- filter(data_longCMSdata, parametersCMSdata %in% c("Fv.Fm", "Y.II.", "Y.NPQ.", "Y.NO."))
-ggboxplot(data_longCMSdata.Chlflu, x = "Genotype", y = "Amount", fill = "Treatment", size = 0.5,  scales = "free_y", facet.by = c("parametersCMSdata"), point.size = 0.75,outlier.size = 0.25,line.color = "#4D4D4D66",  ggtheme = theme_light(), xlab = "Genotype", ylab = "µg/g(FW)")
-
-bpChlflu<- ggbarplot(data_longCMSdata.Chlflu, x = "Genotype", y = "Amount", fill = "Treatment",
-                  palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)",
-                  position = position_dodge(0.8),
-                  facet.by = "parametersCMSdata", scales = "free_y")
-bpChlflu
-stat.testChlflu <- data_longCMSdata.Chlflu %>%
-  group_by(Genotype, parametersCMSdata) %>%
-  t_test(Amount ~ Treatment, paired = TRUE, 
-         p.adjust.method = "bonferroni") %>%
+bpchlflu <- ggbarplot(data_longCMSdata.Chlflu, x = "Treatment", y = "Amount", fill = "Genotype",
+                   palette = "Treatment", add = "mean_se", ylab = "µg.g-1(FW)",
+                   position = position_dodge(0.8),
+                   facet.by = "parametersCMSdata", scales = "free_y")
+bpchlflu
+stat.testchlflu <- data_longCMSdata.Chlflu%>%
+  group_by(Treatment, parametersCMSdata) %>%
+  t_test(Amount ~ Genotype, ref.group = "WT") %>%
   
   add_significance()
-stat.testChlflu
+stat.testchlflu
 
-stat.testChlflu<- stat.testChlflu %>%
-  add_xy_position(x = "Genotype", fun = "mean_se", dodge = 0.8)
-bpChlflu + 
+stat.testchlflu <- stat.testchlflu%>%
+  add_xy_position(x = "Treatment", fun = "mean_se", dodge = 0.8 )
+bpchlflu + 
   stat_pvalue_manual(
-    stat.testChlflu, label = "p.signif", tip.length = 0.01, hide.ns = TRUE) +
-  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+    stat.testchlflu, label = "p.adj.signif", bracket.nudge.y =, hide.ns = TRUE) +
+  scale_y_continuous(expand = expansion(mult = c(0.000001, 0.2)))
 
+    
 
 
 
