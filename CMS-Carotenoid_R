@@ -9,7 +9,7 @@ library(ggfortify)
 install.packages("ggfortify")
 
 # drop sample columms (determine sample column)
-parametersCMSdata <- colnames(CMSdata[, -c(1:5)])
+parametersCMSdata <- colnames(CMSdata2[, -c(1:5)])
 
 #convert to long format
 data_longCMSdata<- gather(CMSdata, parametersCMSdata, Amount, Ant:Y.NO., factor_key=TRUE)
